@@ -7,78 +7,55 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0d0f;
-    --surface: #111518;
-    --surface2: #181d21;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.12);
-    --green: #00e676;
-    --green-dim: rgba(0,230,118,0.08);
-    --red: #ff5252;
-    --text: #f0f2f4;
-    --muted: #6b7580;
-    --muted2: #9aa3ad;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html { background: var(--bg); }
-  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: linear-gradient(rgba(0,230,118,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(0,230,118,0.015) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-  .container { max-width: 960px; margin: 0 auto; padding: 0 1.5rem 4rem; position: relative; z-index: 1; }
-  header { padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
-  .logo { display: flex; align-items: center; gap: 12px; }
-  .logo-mark { width: 36px; height: 36px; border: 1.5px solid var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--green); letter-spacing: -1px; }
-  .logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: 0.02em; color: var(--text); }
-  .logo-sub { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
-  .live-badge { display: flex; align-items: center; gap: 7px; background: var(--green-dim); border: 1px solid rgba(0,230,118,0.2); border-radius: 20px; padding: 5px 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--green); letter-spacing: 0.05em; }
-  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-  .hero { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 2rem; }
-  .hero-stat { background: var(--surface); padding: 1.75rem 1.5rem; transition: background 0.2s; }
-  .hero-stat:hover { background: var(--surface2); }
-  .hero-stat.main { background: linear-gradient(135deg, #0f1a12 0%, #0a1510 100%); }
-  .stat-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
-  .stat-value { font-family: 'DM Serif Display', serif; font-size: 42px; line-height: 1; color: var(--green); }
-  .stat-value.normal { font-size: 28px; color: var(--text); }
-  .stat-value.warn { font-size: 28px; color: var(--red); }
-  .stat-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 6px; }
-  .chart-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
-  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.25rem; }
-  .chart-wrap { position: relative; width: 100%; height: 200px; }
-  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 2rem; }
-  .table-header { padding: 1.25rem 1.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .table-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-  .total-chip { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); background: var(--green-dim); border: 1px solid rgba(0,230,118,0.15); border-radius: 20px; padding: 3px 12px; }
-  .table-scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 12px; min-width: 680px; }
-  thead th { padding: 10px 8px; text-align: center; color: var(--muted); font-weight: 400; font-size: 10px; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--surface); }
-  thead th:first-child { text-align: left; padding-left: 1.5rem; }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--surface2); }
-  td { padding: 11px 8px; text-align: center; color: var(--muted2); }
-  td:first-child { text-align: left; padding-left: 1.5rem; color: var(--text); font-weight: 500; letter-spacing: 0.05em; }
-  td:last-child { color: var(--text); font-weight: 500; font-size: 13px; }
-  .pos { color: var(--green) !important; }
-  .neg { color: var(--red) !important; }
-  .empty { color: #2a3038 !important; }
-  .best { background: rgba(0,230,118,0.06); }
-  footer { border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .footer-text { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.05em; line-height: 1.7; }
-  .footer-text a { color: var(--green); text-decoration: none; }
-  .hfm-link { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 12px; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
-  .hfm-link:hover { border-color: var(--green); color: var(--green); }
-  .loading { text-align: center; padding: 5rem 2rem; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.1em; }
-  .error-box { text-align: center; padding: 3rem 2rem; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--red); }
-  @media(max-width:600px){ .hero{grid-template-columns:1fr 1fr} .stat-value{font-size:30px} header{padding:2rem 0 1.5rem} }
+  :root { --bg:#0a0d0f; --surface:#111518; --surface2:#181d21; --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12); --green:#00e676; --green-dim:rgba(0,230,118,0.08); --red:#ff5252; --text:#f0f2f4; --muted:#6b7580; --muted2:#9aa3ad; }
+  *{margin:0;padding:0;box-sizing:border-box} html{background:var(--bg)}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,230,118,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,230,118,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{max-width:960px;margin:0 auto;padding:0 1.5rem 4rem;position:relative;z-index:1}
+  header{padding:3rem 0 2.5rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-mark{width:36px;height:36px;border:1.5px solid var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:13px;color:var(--green);letter-spacing:-1px}
+  .logo-text{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--text)}
+  .logo-sub{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.05em}
+  .live-badge{display:flex;align-items:center;gap:7px;background:var(--green-dim);border:1px solid rgba(0,230,118,0.2);border-radius:20px;padding:5px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--green)}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .hero{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:2rem}
+  .hero-stat{background:var(--surface);padding:1.75rem 1.5rem;transition:background .2s}
+  .hero-stat:hover{background:var(--surface2)}
+  .hero-stat.main{background:linear-gradient(135deg,#0f1a12 0%,#0a1510 100%)}
+  .stat-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+  .stat-value{font-family:'DM Serif Display',serif;font-size:42px;line-height:1;color:var(--green)}
+  .stat-value.normal{font-size:28px;color:var(--text)}
+  .stat-value.warn{font-size:28px;color:var(--red)}
+  .stat-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px}
+  .chart-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:2rem}
+  .section-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem}
+  .chart-wrap{position:relative;width:100%;height:200px}
+  .table-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:2rem}
+  .table-header{padding:1.25rem 1.5rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .table-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .total-chip{font-family:'DM Mono',monospace;font-size:12px;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,230,118,0.15);border-radius:20px;padding:3px 12px}
+  .table-scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:12px;min-width:680px}
+  thead th{padding:10px 8px;text-align:center;color:var(--muted);font-weight:400;font-size:10px;letter-spacing:.08em;border-bottom:1px solid var(--border);background:var(--surface)}
+  thead th:first-child{text-align:left;padding-left:1.5rem}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--surface2)}
+  td{padding:11px 8px;text-align:center;color:var(--muted2)}
+  td:first-child{text-align:left;padding-left:1.5rem;color:var(--text);font-weight:500}
+  td:last-child{color:var(--text);font-weight:500;font-size:13px}
+  .pos{color:var(--green)!important} .neg{color:var(--red)!important} .empty{color:#2a3038!important}
+  .best{background:rgba(0,230,118,0.06)}
+  .live-row td:first-child::after{content:' ●';color:var(--green);font-size:8px;vertical-align:super}
+  footer{border-top:1px solid var(--border);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .footer-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7}
+  .footer-text a{color:var(--green);text-decoration:none}
+  .hfm-link{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;text-decoration:none;transition:border-color .2s,color .2s}
+  .hfm-link:hover{border-color:var(--green);color:var(--green)}
+  .loading{text-align:center;padding:5rem 2rem;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:.1em}
+  @media(max-width:600px){.hero{grid-template-columns:1fr 1fr}.stat-value{font-size:30px}header{padding:2rem 0 1.5rem}}
 </style>
 </head>
 <body>
@@ -96,7 +73,7 @@
       <span id="updated-label">Cargando...</span>
     </div>
   </header>
-  <div id="app"><div class="loading">Conectando con MyFxBook...</div></div>
+  <div id="app"><div class="loading">Cargando resultados...</div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -105,58 +82,47 @@ const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','
 
 function fmt(v) {
   if (v === null) return '<span class="empty">·</span>';
-  const cls = v >= 0 ? 'pos' : 'neg';
-  return `<span class="${cls}">${v >= 0 ? '+' : ''}${v.toFixed(2)}%</span>`;
+  return `<span class="${v >= 0 ? 'pos':'neg'}">${v >= 0?'+':''}${v.toFixed(2)}%</span>`;
 }
 
 function findBest(years) {
-  let bestMonth = { v: -Infinity, label: '' };
-  let bestYear  = { v: -Infinity, y: 0 };
-  years.forEach(row => {
-    if (row.total > bestYear.v) bestYear = { v: row.total, y: row.year };
-    row.months.forEach((v, i) => {
-      if (v !== null && v > bestMonth.v) bestMonth = { v, label: `${MONTHS_ES[i]} '${String(row.year).slice(2)}` };
-    });
+  let bm = {v:-Infinity,label:''}, by = {v:-Infinity,y:0};
+  years.forEach(r => {
+    if (r.total > by.v) by = {v:r.total, y:r.year};
+    r.months.forEach((v,i) => { if (v!==null && v>bm.v) bm = {v, label:`${MONTHS_ES[i]} '${String(r.year).slice(2)}`}; });
   });
-  return { bestMonth, bestYear };
+  return {bm, by};
 }
 
 function buildCumulative(years) {
-  const labels = [], values = [];
-  let cum = 100;
-  years.forEach(row => {
-    row.months.forEach((v, i) => {
-      if (v !== null) {
-        cum = cum * (1 + v / 100);
-        labels.push(`${MONTHS_ES[i]} ${row.year}`);
-        values.push(parseFloat((cum - 100).toFixed(2)));
-      }
-    });
-  });
-  return { labels, values };
+  const labels=[], values=[];
+  let cum=100;
+  years.forEach(r => r.months.forEach((v,i) => {
+    if (v!==null) { cum=cum*(1+v/100); labels.push(`${MONTHS_ES[i]} ${r.year}`); values.push(parseFloat((cum-100).toFixed(2))); }
+  }));
+  return {labels, values};
 }
 
-function render(data) {
-  const { years, total, strategy, stats } = data;
-  const { bestMonth, bestYear } = findBest(years);
-  const { labels, values }      = buildCumulative(years);
+function render(years, drawdown, lastUpdate) {
+  let cumTotal = 1;
+  years.forEach(r => r.months.forEach(v => { if (v!==null) cumTotal *= (1+v/100); }));
+  const total = parseFloat(((cumTotal-1)*100).toFixed(2));
 
-  // Badge actualizado
-  const upd = new Date(stats.last_update || strategy.updated);
-  document.getElementById('updated-label').textContent =
-    isNaN(upd) ? 'Live · MyFxBook' : `Live · ${stats.last_update || strategy.updated}`;
+  const {bm, by} = findBest(years);
+  const {labels, values} = buildCumulative(years);
 
-  // Tabla
+  document.getElementById('updated-label').textContent = lastUpdate ? `Live · ${lastUpdate}` : 'Live · MyFxBook';
+
   let tableRows = '';
-  years.forEach(row => {
-    const cells = row.months.map((v, i) => {
-      const isBest = v !== null && v === bestMonth.v;
-      return `<td${isBest ? ' class="best"' : ''}>${fmt(v)}</td>`;
+  years.forEach((row, ri) => {
+    const isLive = ri === years.length - 1;
+    const cells = row.months.map((v,i) => {
+      const isBest = v!==null && v===bm.v;
+      return `<td${isBest?' class="best"':''}>${fmt(v)}</td>`;
     }).join('');
-    tableRows += `<tr>
-      <td>${row.year}</td>
-      ${cells}
-      <td><span class="${row.total >= 0 ? 'pos' : 'neg'}">${row.total >= 0 ? '+' : ''}${row.total.toFixed(2)}%</span></td>
+    tableRows += `<tr${isLive?' class="live-row"':''}>
+      <td>${row.year}</td>${cells}
+      <td><span class="${row.total>=0?'pos':'neg'}">${row.total>=0?'+':''}${row.total.toFixed(2)}%</span></td>
     </tr>`;
   });
 
@@ -169,18 +135,18 @@ function render(data) {
       </div>
       <div class="hero-stat">
         <div class="stat-label">Mejor año</div>
-        <div class="stat-value normal">${bestYear.y}</div>
-        <div class="stat-sub">+${bestYear.v.toFixed(2)}%</div>
+        <div class="stat-value normal">${by.y}</div>
+        <div class="stat-sub">+${by.v.toFixed(2)}%</div>
       </div>
       <div class="hero-stat">
         <div class="stat-label">Max drawdown</div>
-        <div class="stat-value warn">${stats.max_drawdown_pct != null ? stats.max_drawdown_pct.toFixed(1) + '%' : '—'}</div>
+        <div class="stat-value warn">${drawdown!=null ? drawdown.toFixed(1)+'%' : '—'}</div>
         <div class="stat-sub">caída máxima registrada</div>
       </div>
       <div class="hero-stat">
         <div class="stat-label">Mejor mes</div>
-        <div class="stat-value normal">${bestMonth.label}</div>
-        <div class="stat-sub">+${bestMonth.v.toFixed(2)}%</div>
+        <div class="stat-value normal">${bm.label}</div>
+        <div class="stat-sub">+${bm.v.toFixed(2)}%</div>
       </div>
     </div>
 
@@ -196,13 +162,7 @@ function render(data) {
       </div>
       <div class="table-scroll">
         <table>
-          <thead>
-            <tr>
-              <th>AÑO</th>
-              ${MONTHS_ES.map(m => `<th>${m}</th>`).join('')}
-              <th>TOTAL</th>
-            </tr>
-          </thead>
+          <thead><tr><th>AÑO</th>${MONTHS_ES.map(m=>`<th>${m}</th>`).join('')}<th>TOTAL</th></tr></thead>
           <tbody>${tableRows}</tbody>
         </table>
       </div>
@@ -210,67 +170,59 @@ function render(data) {
 
     <footer>
       <div class="footer-text">
-        Estrategia #${strategy.provider_id} · ${strategy.broker}<br>
+        Estrategia #66155625 · HF Markets<br>
         Los rendimientos pasados no garantizan resultados futuros.<br>
         Solo para clientes de <a href="https://skyeleven.com.ar">SKY Eleven</a> — One Percent.
       </div>
-      <a class="hfm-link" href="https://my.hfm.com/es/copy-trading/provider-details?provider=${strategy.provider_id}" target="_blank">Ver en HFM ↗</a>
+      <a class="hfm-link" href="https://my.hfm.com/es/copy-trading/provider-details?provider=66155625" target="_blank">Ver en HFM ↗</a>
     </footer>
   `;
 
-  // Chart
   new Chart(document.getElementById('chart'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        borderColor: '#00e676',
-        backgroundColor: 'rgba(0,230,118,0.06)',
-        fill: true,
-        tension: 0.35,
-        pointRadius: 0,
-        pointHoverRadius: 5,
-        pointHoverBackgroundColor: '#00e676',
-        borderWidth: 1.5,
-      }]
-    },
+    data: { labels, datasets: [{ data:values, borderColor:'#00e676', backgroundColor:'rgba(0,230,118,0.06)', fill:true, tension:0.35, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#00e676', borderWidth:1.5 }] },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#111518',
-          borderColor: 'rgba(0,230,118,0.3)',
-          borderWidth: 1,
-          titleColor: '#6b7580',
-          bodyColor: '#00e676',
-          titleFont: { family: 'DM Mono', size: 10 },
-          bodyFont: { family: 'DM Mono', size: 13 },
-          callbacks: { label: ctx => `+${ctx.parsed.y.toFixed(2)}% acumulado` }
-        }
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#111518',borderColor:'rgba(0,230,118,0.3)',borderWidth:1,titleColor:'#6b7580',bodyColor:'#00e676',titleFont:{family:'DM Mono',size:10},bodyFont:{family:'DM Mono',size:13},callbacks:{label:ctx=>`+${ctx.parsed.y.toFixed(2)}% acumulado`}}
       },
-      scales: {
-        x: { ticks: { color: '#6b7580', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 16, maxRotation: 0 }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } },
-        y: { ticks: { color: '#6b7580', font: { family: 'DM Mono', size: 9 }, callback: v => `+${v}%` }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { color: 'rgba(255,255,255,0.07)' } }
+      scales:{
+        x:{ticks:{color:'#6b7580',font:{family:'DM Mono',size:9},maxTicksLimit:16,maxRotation:0},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.07)'}},
+        y:{ticks:{color:'#6b7580',font:{family:'DM Mono',size:9},callback:v=>`+${v}%`},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.07)'}}
       }
     }
   });
 }
 
-// Cargar todo desde la API live
-fetch('/api/live')
-  .then(r => r.json())
-  .then(data => {
-    if (data.error) throw new Error(data.message);
-    render(data);
-  })
-  .catch(err => {
-    document.getElementById('app').innerHTML =
-      `<div class="error-box">Error al conectar con MyFxBook:<br>${err.message}</div>`;
-  });
+// Cargar data estática + live en paralelo
+Promise.all([
+  fetch('./data.json?t='+Date.now()).then(r=>r.json()),
+  fetch('/api/live').then(r=>r.json()).catch(()=>null)
+]).then(([staticData, liveData]) => {
+  // Combinar: historial estático + año actual desde API
+  const years = [...staticData.years];
+
+  if (liveData && !liveData.error && liveData.currentYear) {
+    const cy = liveData.currentYear;
+    // Reemplazar o agregar el año actual con datos live
+    const idx = years.findIndex(y => y.year === cy.year);
+    if (idx >= 0) {
+      years[idx] = cy;
+    } else {
+      years.push(cy);
+    }
+  }
+
+  const drawdown   = liveData?.drawdown   ?? staticData.stats?.max_drawdown_pct ?? null;
+  const lastUpdate = liveData?.last_update ?? staticData.strategy?.updated ?? null;
+
+  render(years, drawdown, lastUpdate);
+}).catch(err => {
+  document.getElementById('app').innerHTML =
+    `<div style="text-align:center;padding:3rem;font-family:'DM Mono',monospace;font-size:12px;color:#ff5252">Error: ${err.message}</div>`;
+});
 </script>
 </body>
 </html>
