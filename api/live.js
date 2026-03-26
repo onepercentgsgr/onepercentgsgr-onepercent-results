@@ -18,30 +18,35 @@ export default async function handler(req, res) {
     }
     const session = loginData.session;
 
-    // 2. Cuentas + datos del año actual en paralelo
+    // 2. Obtener cuentas para el ID interno real
+    const accountsRes  = await fetch(`https://www.myfxbook.com/api/get-my-accounts.json?session=${session}`);
+    const accountsData = await accountsRes.json();
+
+    if (accountsData.error || !accountsData.accounts?.length) {
+      fetch(`https://www.myfxbook.com/api/logout.json?session=${session}`).catch(() => {});
+      return res.status(404).json({ error: true, message: 'Sin cuentas' });
+    }
+
+    const account    = accountsData.accounts.find(a =>
+      a.name?.toLowerCase().includes('percent') ||
+      a.name?.toLowerCase().includes('one')
+    ) || accountsData.accounts[0];
+
+    const internalId = account.id; // ID interno real, no el del portfolio público
+
+    // 3. Datos diarios solo del año actual (liviano)
     const now       = new Date();
     const thisYear  = now.getFullYear();
     const startYear = `${thisYear}-01-01`;
     const endToday  = now.toISOString().split('T')[0];
 
-    const [accountsRes, dailyRes] = await Promise.all([
-      fetch(`https://www.myfxbook.com/api/get-my-accounts.json?session=${session}`),
-      fetch(`https://www.myfxbook.com/api/get-data-daily.json?session=${session}&id=${process.env.MYFXBOOK_ACCOUNT_ID || '0'}&start=${startYear}&end=${endToday}`)
-    ]);
+    const dailyRes  = await fetch(`https://www.myfxbook.com/api/get-data-daily.json?session=${session}&id=${internalId}&start=${startYear}&end=${endToday}`);
+    const dailyData = await dailyRes.json();
 
-    const accountsData = await accountsRes.json();
-    const dailyData    = await dailyRes.json();
-
-    // 3. Logout
+    // 4. Logout
     fetch(`https://www.myfxbook.com/api/logout.json?session=${session}`).catch(() => {});
 
-    // 4. Cuenta
-    const account = accountsData.accounts?.find(a =>
-      a.name?.toLowerCase().includes('percent') ||
-      a.name?.toLowerCase().includes('one')
-    ) || accountsData.accounts?.[0];
-
-    // 5. Calcular meses del año actual desde datos diarios (solo este año = liviano)
+    // 5. Calcular meses del año actual
     const currentYearMonths = new Array(12).fill(null);
 
     if (!dailyData.error && Array.isArray(dailyData.dataDaily) && dailyData.dataDaily.length) {
@@ -51,12 +56,12 @@ export default async function handler(req, res) {
         let year, month;
         if (dateStr.includes('/')) {
           const p = dateStr.split('/');
-          month = p[0].padStart(2,'0');
+          month = p[0].padStart(2, '0');
           year  = p[2];
         } else if (dateStr.includes('-')) {
           const p = dateStr.split('-');
           year  = p[0];
-          month = p[1].padStart(2,'0');
+          month = p[1].padStart(2, '0');
         }
         if (!year || !month) return;
 
@@ -79,20 +84,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // Total del año actual
     let cumYear = 1;
     currentYearMonths.forEach(v => { if (v !== null) cumYear *= (1 + v / 100); });
-    const yearTotal = parseFloat(((cumYear - 1) * 100).toFixed(2));
 
     return res.status(200).json({
-      error:        false,
-      last_update:  account?.lastUpdateDate || endToday,
-      drawdown:     account?.drawdown ? -parseFloat(parseFloat(account.drawdown).toFixed(2)) : null,
-      balance:      account?.balance  ? parseFloat(parseFloat(account.balance).toFixed(2))   : null,
+      error:       false,
+      last_update: account.lastUpdateDate || endToday,
+      drawdown:    account.drawdown ? -parseFloat(parseFloat(account.drawdown).toFixed(2)) : null,
+      balance:     account.balance  ?  parseFloat(parseFloat(account.balance).toFixed(2))  : null,
       currentYear: {
-        year:    thisYear,
-        months:  currentYearMonths,
-        total:   yearTotal,
+        year:   thisYear,
+        months: currentYearMonths,
+        total:  parseFloat(((cumYear - 1) * 100).toFixed(2)),
       }
     });
 
