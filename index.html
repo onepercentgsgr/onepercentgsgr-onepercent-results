@@ -206,12 +206,22 @@ Promise.all([
 
   if (liveData && !liveData.error && liveData.currentYear) {
     const cy = liveData.currentYear;
-    // Reemplazar o agregar el año actual con datos live
-    const idx = years.findIndex(y => y.year === cy.year);
-    if (idx >= 0) {
-      years[idx] = cy;
-    } else {
-      years.push(cy);
+    // Solo usar datos live si realmente tienen meses con datos (no todo null/0)
+    const hasRealData = cy.months.some(v => v !== null && v !== 0);
+    if (hasRealData) {
+      const idx = years.findIndex(y => y.year === cy.year);
+      if (idx >= 0) {
+        // Solo reemplazar mes a mes si el live tiene dato y el estático no
+        cy.months.forEach((v, i) => {
+          if (v !== null && v !== 0) years[idx].months[i] = v;
+        });
+        // Recalcular total del año
+        let cum = 1;
+        years[idx].months.forEach(v => { if (v !== null) cum *= (1 + v / 100); });
+        years[idx].total = parseFloat(((cum - 1) * 100).toFixed(2));
+      } else {
+        years.push(cy);
+      }
     }
   }
 
