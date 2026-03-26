@@ -1,91 +1,121 @@
 // Vercel Serverless Function — /api/live
-// Llama a MyFxBook con credenciales seguras (env vars) y devuelve los datos al frontend.
-// Las credenciales NUNCA llegan al browser.
+// Trae TODO el historial mensual desde MyFxBook API automáticamente.
+// Las credenciales viven en variables de entorno de Vercel, nunca en el frontend.
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=3600'); // cache 1 hora en Vercel
+  res.setHeader('Cache-Control', 's-maxage=3600');
 
-  const email    = process.env.MYFXBOOK_EMAIL;
-  const password = process.env.MYFXBOOK_PASSWORD;
-  const accountId = process.env.MYFXBOOK_ACCOUNT_ID; // ID numérico de la cuenta en MyFxBook
+  const email     = process.env.MYFXBOOK_EMAIL;
+  const password  = process.env.MYFXBOOK_PASSWORD;
+  const accountId = process.env.MYFXBOOK_ACCOUNT_ID;
 
   if (!email || !password || !accountId) {
     return res.status(500).json({ error: true, message: 'Variables de entorno no configuradas' });
   }
 
   try {
-    // 1. Login → obtener session key
-    const loginRes = await fetch(
-      `https://www.myfxbook.com/api/login.json?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
-    );
+    // 1. Login
+    const loginRes  = await fetch(`https://www.myfxbook.com/api/login.json?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
     const loginData = await loginRes.json();
-
     if (loginData.error) {
-      return res.status(401).json({ error: true, message: 'Login a MyFxBook fallido: ' + loginData.message });
+      return res.status(401).json({ error: true, message: 'Login fallido: ' + loginData.message });
     }
-
     const session = loginData.session;
 
-    // 2. Obtener datos de la cuenta
+    // 2. Traer datos diarios históricos completos + info de cuenta en paralelo
+    const startDate = '2023-08-01';
+    const endDate   = new Date().toISOString().split('T')[0];
+
     const [accountsRes, dailyRes] = await Promise.all([
       fetch(`https://www.myfxbook.com/api/get-my-accounts.json?session=${session}`),
-      fetch(`https://www.myfxbook.com/api/get-data-daily.json?session=${session}&id=${accountId}&start=2026-01-01&end=2026-12-31`)
+      fetch(`https://www.myfxbook.com/api/get-data-daily.json?session=${session}&id=${accountId}&start=${startDate}&end=${endDate}`)
     ]);
 
     const accountsData = await accountsRes.json();
     const dailyData    = await dailyRes.json();
 
-    // 3. Logout (liberar sesión)
+    // 3. Logout
     fetch(`https://www.myfxbook.com/api/logout.json?session=${session}`).catch(() => {});
 
-    // 4. Encontrar la cuenta correcta
+    // 4. Info general de la cuenta
     const account = accountsData.accounts?.find(a => String(a.id) === String(accountId))
                  || accountsData.accounts?.[0];
 
     if (!account) {
-      return res.status(404).json({ error: true, message: 'Cuenta no encontrada en MyFxBook' });
+      return res.status(404).json({ error: true, message: 'Cuenta no encontrada' });
     }
 
-    // 5. Calcular ganancia mensual del mes actual desde datos diarios
-    const now = new Date();
-    const currentMonth = now.getMonth(); // 0-indexed
-    const currentYear  = now.getFullYear();
+    // 5. Calcular ganancia mensual desde datos diarios
+    // Formato fecha de MyFxBook: "MM/DD/YYYY"
+    const monthlyMap = {};
 
-    let monthlyGain = null;
-    if (!dailyData.error && dailyData.dataDaily) {
-      const thisMonthData = dailyData.dataDaily.filter(d => {
-        // formato fecha: "MM/DD/YYYY"
-        const parts = d.date.split('/');
-        const dMonth = parseInt(parts[0]) - 1;
-        const dYear  = parseInt(parts[2]);
-        return dMonth === currentMonth && dYear === currentYear;
+    if (!dailyData.error && dailyData.dataDaily?.length) {
+      dailyData.dataDaily.forEach(d => {
+        const parts   = d.date.split('/');
+        const month   = parts[0].padStart(2, '0');
+        const year    = parts[2];
+        const key     = `${year}-${month}`;
+        const balance = parseFloat(d.balance);
+        const profit  = parseFloat(d.profit);
+
+        if (!monthlyMap[key]) {
+          // Primer dia del mes: balance de apertura = balance actual - profit del dia
+          monthlyMap[key] = { firstBalance: balance - profit, lastBalance: balance };
+        } else {
+          monthlyMap[key].lastBalance = balance;
+        }
+      });
+    }
+
+    // 6. Construir estructura años/meses
+    const yearsMap = {};
+    Object.entries(monthlyMap).forEach(([key, { firstBalance, lastBalance }]) => {
+      const [yearStr, monthStr] = key.split('-');
+      const year  = parseInt(yearStr);
+      const month = parseInt(monthStr) - 1; // 0-indexed
+      const gain  = firstBalance > 0
+        ? parseFloat(((lastBalance - firstBalance) / firstBalance * 100).toFixed(2))
+        : null;
+
+      if (!yearsMap[year]) yearsMap[year] = new Array(12).fill(null);
+      yearsMap[year][month] = gain;
+    });
+
+    // Total por año (compuesto)
+    const years = Object.entries(yearsMap)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .map(([year, months]) => {
+        let cum = 1;
+        months.forEach(v => { if (v !== null) cum *= (1 + v / 100); });
+        const total = parseFloat(((cum - 1) * 100).toFixed(2));
+        return { year: parseInt(year), months, total };
       });
 
-      if (thisMonthData.length > 0) {
-        // Ganancia del mes = profit acumulado del mes
-        const firstBalance = parseFloat(thisMonthData[0].balance) - parseFloat(thisMonthData[0].profit);
-        const lastBalance  = parseFloat(thisMonthData[thisMonthData.length - 1].balance);
-        if (firstBalance > 0) {
-          monthlyGain = parseFloat(((lastBalance - firstBalance) / firstBalance * 100).toFixed(2));
-        }
-      }
-    }
+    // 7. Total acumulado general
+    let cumTotal = 1;
+    years.forEach(row => {
+      row.months.forEach(v => { if (v !== null) cumTotal *= (1 + v / 100); });
+    });
+    const totalGain = parseFloat(((cumTotal - 1) * 100).toFixed(2));
 
-    // 6. Respuesta limpia al frontend
     return res.status(200).json({
       error: false,
-      live: {
-        gain:           parseFloat(parseFloat(account.gain).toFixed(2)),
-        drawdown:       parseFloat(parseFloat(account.drawdown).toFixed(2)),
-        balance:        parseFloat(parseFloat(account.balance).toFixed(2)),
-        profit:         parseFloat(parseFloat(account.profit).toFixed(2)),
-        monthly:        account.monthly ? parseFloat(parseFloat(account.monthly).toFixed(2)) : monthlyGain,
-        daily:          parseFloat(parseFloat(account.daily).toFixed(2)),
-        lastUpdate:     account.lastUpdateDate,
-        currency:       account.currency,
-        profitFactor:   account.profitFactor ? parseFloat(parseFloat(account.profitFactor).toFixed(2)) : null,
-      }
+      strategy: {
+        name:        'One Percent',
+        provider_id: '66155625',
+        broker:      'HF Markets',
+        currency:    account.currency || 'USD',
+        updated:     endDate,
+      },
+      stats: {
+        max_drawdown_pct: account.drawdown ? -parseFloat(parseFloat(account.drawdown).toFixed(2)) : null,
+        profit_factor:    account.profitFactor ? parseFloat(parseFloat(account.profitFactor).toFixed(2)) : null,
+        balance:          parseFloat(parseFloat(account.balance).toFixed(2)),
+        last_update:      account.lastUpdateDate,
+      },
+      years,
+      total: totalGain,
     });
 
   } catch (err) {
